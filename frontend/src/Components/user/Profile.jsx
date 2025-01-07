@@ -12,7 +12,8 @@ const Profile = () => {
   const [editData, setEditData] = useState({
     username: '',
     email: '',
-    image: ''
+    image: '',
+    phonenumber: ''
   });
   const [newImage, setNewImage] = useState(null);
   const [updateLoading, setUpdateLoading] = useState(false);
@@ -22,7 +23,8 @@ const Profile = () => {
       setEditData({
         username: user.username,
         email: user.email,
-        image: user.image
+        image: user.image,
+        phonenumber: user.phonenumber
       });
     }
   }, [user]);
@@ -74,9 +76,16 @@ const Profile = () => {
   const handleUpdate = async () => {
     try {
       setUpdateLoading(true);
+      const token = localStorage.getItem('token');
+      
       const response = await axios.put(
         'http://localhost:3000/api/user/update',
-        editData,
+        {
+          username: editData.username,
+          email: editData.email,
+          phonenumber: editData.phonenumber,
+          image: editData.image
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -86,9 +95,10 @@ const Profile = () => {
       
       dispatch(setUser(response.data.user));
       setIsEditing(false);
-      setUpdateLoading(false);
     } catch (error) {
       console.error('Update error:', error);
+      alert(error.response?.data?.message || 'Failed to update profile');
+    } finally {
       setUpdateLoading(false);
     }
   };
@@ -173,7 +183,17 @@ const Profile = () => {
                     value={editData.email}
                     onChange={(e) => setEditData(prev => ({ ...prev, email: e.target.value }))}
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-                    placeholder="Enter your email"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                  <input
+                    type="text"
+                    value={editData.phonenumber}
+                    onChange={(e) => setEditData(prev => ({ ...prev, phonenumber: e.target.value }))}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                    placeholder="Enter your phone number"
                   />
                 </div>
 
@@ -198,7 +218,8 @@ const Profile = () => {
                       setEditData({
                         username: user.username,
                         email: user.email,
-                        image: user.image
+                        image: user.image,
+                        phonenumber: user.phonenumber
                       });
                     }}
                     className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition duration-200 shadow-md"
@@ -212,6 +233,7 @@ const Profile = () => {
                 <div className="text-center">
                   <h2 className="text-3xl font-bold text-gray-900">{user.username}</h2>
                   <p className="text-gray-500 mt-2">{user.email}</p>
+                  <p className="text-gray-500 mt-2">Phone: {user.phonenumber}</p>
                 </div>
               </div>
             )}

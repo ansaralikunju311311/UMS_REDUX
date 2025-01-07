@@ -20,15 +20,12 @@ const SignUp = () => {
     formState: { errors },
     reset
   } = useForm();
-  
   const password = watch('password');
-
   const handleImageUpload = async (file) => {
     if (!file) {
       toast.error('Please select an image file');
       return;
     }
-
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', 'testing');
@@ -49,7 +46,6 @@ const SignUp = () => {
       dispatch(setLoading(false));
     }
   };
-
   const onSubmit = async (data) => {
     try {
       if (!imageUrl) {
@@ -93,7 +89,7 @@ const SignUp = () => {
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          {/* Username Field */}
+         
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700">
               Username
@@ -109,7 +105,7 @@ const SignUp = () => {
             )}
           </div>
 
-          {/* Email Field */}
+        
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
@@ -137,7 +133,6 @@ const SignUp = () => {
             {errors.phonenumber && <p className="text-red-500 text-sm mt-1">{errors.phonenumber.message}</p>}
           </div>
 
-          {/* Password Field */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
@@ -159,7 +154,7 @@ const SignUp = () => {
             )}
           </div>
 
-          {/* Confirm Password Field */}
+          
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
               Confirm Password
@@ -179,7 +174,7 @@ const SignUp = () => {
             )}
           </div>
 
-          {/* Image Upload */}
+        
           <div>
             <label htmlFor="image" className="block text-sm font-medium text-gray-700">
               Profile Image

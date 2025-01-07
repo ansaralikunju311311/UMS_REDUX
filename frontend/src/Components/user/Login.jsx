@@ -32,8 +32,10 @@ const Login = () => {
           token: response.data.token,
         }));
         
+        // Show success toast with login time
+        
+        toast.success(`Welcome back!`);
         navigate('/user/profile');
-        toast.success('Login successful!');
       } else {
         dispatch(setError('Invalid response from server'));
         toast.error('Invalid response from server');

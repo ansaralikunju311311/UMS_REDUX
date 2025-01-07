@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../redux/features/adminSlice';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const AdminDash = () => {
     const navigate = useNavigate();
@@ -57,6 +58,7 @@ const AdminDash = () => {
     const handleLogout = () => {
         dispatch(logout());
         localStorage.removeItem('adminToken');
+        toast.info('Admin logged out successfully');
         navigate('/admin/login');
     };
 
@@ -89,7 +91,7 @@ const AdminDash = () => {
 
     const handleSaveEdit = async () => {
         if (!editImageUrl) {
-            alert('Please upload an image');
+            toast.error('Please upload an image');
             return;
         }
 
@@ -105,6 +107,9 @@ const AdminDash = () => {
                 }
             );
 
+            
+            toast.success(`User ${editFormData.username} updated successfully`);
+
             setUsers(users.map(user => 
                 user._id === editingUser._id ? response.data.user : user
             ));
@@ -117,7 +122,7 @@ const AdminDash = () => {
             setEditImageUrl('');
         } catch (error) {
             console.error('Error updating user:', error);
-            alert(error.response?.data?.message || 'Failed to update user');
+            toast.error(error.response?.data?.message || 'Failed to update user');
         }
     };
 
@@ -132,52 +137,61 @@ const AdminDash = () => {
                 });
                 
                 setUsers(users.filter(user => user._id !== userId));
+                toast.success('User deleted successfully');
             } catch (error) {
                 console.error('Error deleting user:', error);
-                alert('Failed to delete user');
+                toast.error(error.response?.data?.message || 'Failed to delete user');
             }
         }
     };
 
     const handleImageUpload = async (file) => {
-        if (!file) return;
+        if (!file) {
+            toast.error('Please select an image file');
+            return;
+        }
 
+        setImageUploading(true);
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', 'testing');
 
-        setImageUploading(true);
         try {
             const response = await axios.post(
                 'https://api.cloudinary.com/v1_1/dliraelbo/image/upload',
                 formData
             );
             setImageUrl(response.data.url);
+            toast.success('Image uploaded successfully!');
         } catch (error) {
-            console.error('Image upload Error:', error);
-            alert('Failed to upload image');
+            console.error('Image upload error:', error);
+            toast.error('Failed to upload image. Please try again.');
         } finally {
             setImageUploading(false);
         }
     };
 
     const handleEditImageUpload = async (file) => {
-        if (!file) return;
+        if (!file) {
+            toast.error('Please select an image file');
+            return;
+        }
 
+        setEditImageUploading(true);
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', 'testing');
 
-        setEditImageUploading(true);
         try {
             const response = await axios.post(
                 'https://api.cloudinary.com/v1_1/dliraelbo/image/upload',
                 formData
             );
             setEditImageUrl(response.data.url);
+            toast.success('Profile image updated successfully!');
         } catch (error) {
-            console.error('Image upload Error:', error);
-            alert('Failed to upload image');
+            console.error('Image upload error:', error);
+            toast.error('Failed to upload image. Please try again.');
         } finally {
             setEditImageUploading(false);
         }
@@ -186,7 +200,7 @@ const AdminDash = () => {
     const handleAddUser = async (e) => {
         e.preventDefault();
         if (!imageUrl) {
-            alert('Please upload an image first');
+            toast.error('Please upload an image first');
             return;
         }
 
@@ -204,6 +218,8 @@ const AdminDash = () => {
                 }
             );
             
+            
+            toast.success(`User ${newUserData.username} added successfully`);
             setUsers([...users, response.data.user]);
             setShowAddModal(false);
             setNewUserData({
@@ -215,7 +231,7 @@ const AdminDash = () => {
             setImageUrl('');
         } catch (error) {
             console.error('Error creating user:', error);
-            alert(error.response?.data?.message || 'Failed to create user');
+            toast.error(error.response?.data?.message || 'Failed to create user. Please try again.');
         }
     };
 

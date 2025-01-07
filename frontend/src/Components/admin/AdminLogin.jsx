@@ -50,7 +50,15 @@ const AdminLogin = () => {
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Admin Login</h2>
         <form onSubmit={handleSubmit(onSubmit)}>
-        
+           <div className="mb-4">
+            <label>Username</label>
+            <input placeholder='admin'
+            className="w-full p-2 border rounded mt-1"
+            type="text"
+            {...register('username', { required: 'Username is required' })}
+            />
+            {errors.username && <p className="text-red-500">{errors.username.message}</p>}
+           </div>
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-2" htmlFor="email">
               Email

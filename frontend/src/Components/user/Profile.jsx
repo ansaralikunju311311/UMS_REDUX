@@ -122,8 +122,10 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-lg mx-auto">
+      
         <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
           {/* Header Section */}
+          
           <div className="relative h-40 bg-gradient-to-r from-indigo-500 to-purple-600">
             {!isEditing && (
               <button
@@ -136,6 +138,7 @@ const Profile = () => {
                 <span>Edit</span>
               </button>
             )}
+            <h1 className="text-4xl font-bold text-white mt-600 mb-4 text-center">Welcome! {user.username}</h1>
             <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
               <div className="relative">
                 <img

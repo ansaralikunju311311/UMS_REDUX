@@ -280,7 +280,7 @@ const AdminDash = () => {
                             <h1 className="text-xl font-bold text-gray-800">Admin Dashboard</h1>
                         </div>
                         <div className="flex items-center">
-                            <span className="mr-4 text-gray-600">Welcome, {admin.email}</span>
+                            <span className="mr-4 text-gray-600">Welcome, {admin.username}</span>
                             <button
                                 onClick={handleLogout}
                                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium"

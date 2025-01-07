@@ -74,6 +74,53 @@ export const loginUser = async (req, res) => {
     }
 };
 
+export const updateUser = async (req, res) => {
+    try {
+        const { username, email, image } = req.body;
+        const userId = req.user.userid;
+
+        // Validate required fields
+        if (!username || !email) {
+            return res.status(400).json({ message: "Username and email are required" });
+        }
+
+        // Check if email is being changed and if it's already taken
+        const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+        if (existingUser) {
+            return res.status(400).json({ message: "Email already in use" });
+        }
+
+        // Update user
+        const updateData = { username, email };
+        if (image) {
+            updateData.image = image;
+        }
+
+        const user = await User.findByIdAndUpdate(
+            userId,
+            updateData,
+            { new: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({ 
+            message: "Profile updated successfully", 
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                image: user.image
+            }
+        });
+    } catch (error) {
+        console.error('Update error:', error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
 export const verifyToken = async (req, res) => {
     try {
         const user = await User.findById(req.user.userid).select('-password');
@@ -97,4 +144,4 @@ export const logoutUser = async (req, res) => {
     }
 };
 
-export default { registerUser, loginUser, verifyToken, logoutUser };
+export default { registerUser, loginUser, verifyToken, logoutUser, updateUser };

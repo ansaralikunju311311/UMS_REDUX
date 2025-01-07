@@ -12,6 +12,12 @@ const AdminDash = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [editingUser, setEditingUser] = useState(null);
+    const [editFormData, setEditFormData] = useState({
+        username: '',
+        email: '',
+        phonenumber: ''
+    });
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -40,6 +46,74 @@ const AdminDash = () => {
         dispatch(logout());
         localStorage.removeItem('adminToken');
         navigate('/admin/login');
+    };
+
+    const handleEditClick = (user) => {
+        setEditingUser(user);
+        setEditFormData({
+            username: user.username,
+            email: user.email,
+            phonenumber: user.phonenumber
+        });
+    };
+
+    const handleEditFormChange = (e) => {
+        setEditFormData({
+            ...editFormData,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const handleCancelEdit = () => {
+        setEditingUser(null);
+        setEditFormData({
+            username: '',
+            email: '',
+            phonenumber: ''
+        });
+    };
+
+    const handleSaveEdit = async (userId) => {
+        try {
+            const token = localStorage.getItem('adminToken');
+            const response = await axios.put(`http://localhost:3000/api/admin/users/${userId}`, editFormData, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            
+            setUsers(users.map(user => 
+                user._id === userId ? response.data.user : user
+            ));
+            
+            setEditingUser(null);
+            setEditFormData({
+                username: '',
+                email: '',
+                phonenumber: ''
+            });
+        } catch (error) {
+            console.error('Error updating user:', error);
+            alert('Failed to update user');
+        }
+    };
+
+    const handleDeleteUser = async (userId) => {
+        if (window.confirm('Are you sure you want to delete this user?')) {
+            try {
+                const token = localStorage.getItem('adminToken');
+                await axios.delete(`http://localhost:3000/api/admin/users/${userId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                
+                setUsers(users.filter(user => user._id !== userId));
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Failed to delete user');
+            }
+        }
     };
 
     const filteredUsers = users.filter(user => {
@@ -145,25 +219,80 @@ const AdminDash = () => {
                                                         />
                                                     </div>
                                                     <div className="ml-4">
-                                                        <div className="text-sm font-medium text-gray-900">
-                                                            {user.username}
-                                                        </div>
+                                                        {editingUser?._id === user._id ? (
+                                                            <input
+                                                                type="text"
+                                                                name="username"
+                                                                value={editFormData.username}
+                                                                onChange={handleEditFormChange}
+                                                                className="text-sm border rounded px-2 py-1"
+                                                            />
+                                                        ) : (
+                                                            <div className="text-sm font-medium text-gray-900">
+                                                                {user.username}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900">{user.email}</div>
+                                                {editingUser?._id === user._id ? (
+                                                    <input
+                                                        type="email"
+                                                        name="email"
+                                                        value={editFormData.email}
+                                                        onChange={handleEditFormChange}
+                                                        className="text-sm border rounded px-2 py-1"
+                                                    />
+                                                ) : (
+                                                    <div className="text-sm text-gray-900">{user.email}</div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900">{user.phonenumber}</div>
+                                                {editingUser?._id === user._id ? (
+                                                    <input
+                                                        type="text"
+                                                        name="phonenumber"
+                                                        value={editFormData.phonenumber}
+                                                        onChange={handleEditFormChange}
+                                                        className="text-sm border rounded px-2 py-1"
+                                                    />
+                                                ) : (
+                                                    <div className="text-sm text-gray-900">{user.phonenumber}</div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <button className="text-indigo-600 hover:text-indigo-900 mr-3">
-                                                    Edit
-                                                </button>
-                                                <button className="text-red-600 hover:text-red-900">
-                                                    Delete
-                                                </button>
+                                                {editingUser?._id === user._id ? (
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            onClick={() => handleSaveEdit(user._id)}
+                                                            className="text-green-600 hover:text-green-900"
+                                                        >
+                                                            Save
+                                                        </button>
+                                                        <button
+                                                            onClick={handleCancelEdit}
+                                                            className="text-red-600 hover:text-red-900"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            onClick={() => handleEditClick(user)}
+                                                            className="text-indigo-600 hover:text-indigo-900"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteUser(user._id)}
+                                                            className="text-red-600 hover:text-red-900"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}

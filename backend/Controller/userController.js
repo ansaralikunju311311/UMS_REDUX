@@ -5,10 +5,10 @@ import createToken from "../utils/createToken.js";
 
 export const registerUser = async (req, res) => {
     try {
-        const { username, email, password, image } = req.body;
+        const { username, email, password, image, phonenumber } = req.body;
         
         // Validate required fields
-        if (!username || !email || !password || !image) {
+        if (!username || !email || !password || !image || !phonenumber) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
@@ -17,12 +17,14 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({ message: "User already exists" });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
         const user = new User({ 
             username, 
             email, 
             password: hashedPassword,
-            image 
+            image,
+            phonenumber 
         });
         
         await user.save();
@@ -33,11 +35,13 @@ export const registerUser = async (req, res) => {
             _id: user._id,
             username: user.username,
             email: user.email,
-            image: user.image
+            image: user.image,
+            phonenumber: user.phonenumber
         };
 
         res.status(201).json({ 
             message: "User registered successfully", 
+            success: true,
             user: userData, 
             token 
         });
@@ -65,7 +69,8 @@ export const loginUser = async (req, res) => {
             _id: user._id,
             username: user.username,
             email: user.email,
-            image: user.image
+            image: user.image,
+            phonenumber: user.phonenumber
         };
         res.status(200).json({ user: userData, token });
     } catch (error) {
@@ -76,7 +81,7 @@ export const loginUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
     try {
-        const { username, email, image } = req.body;
+        const { username, email, image, phonenumber } = req.body;
         const userId = req.user.userid;
 
         // Validate required fields
@@ -95,6 +100,9 @@ export const updateUser = async (req, res) => {
         if (image) {
             updateData.image = image;
         }
+        if (phonenumber) {
+            updateData.phonenumber = phonenumber;
+        }
 
         const user = await User.findByIdAndUpdate(
             userId,
@@ -112,7 +120,8 @@ export const updateUser = async (req, res) => {
                 _id: user._id,
                 username: user.username,
                 email: user.email,
-                image: user.image
+                image: user.image,
+                phonenumber: user.phonenumber
             }
         });
     } catch (error) {

@@ -121,7 +121,7 @@ const AdminDash = () => {
                                                     </div>
                                                     <div className="ml-4">
                                                         <div className="text-sm font-medium text-gray-900">
-                                                            {user.name}
+                                                            {user.username}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -130,7 +130,7 @@ const AdminDash = () => {
                                                 <div className="text-sm text-gray-900">{user.email}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900">{user.phone}</div>
+                                                <div className="text-sm text-gray-900">{user.phonenumber}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <button className="text-indigo-600 hover:text-indigo-900 mr-3">

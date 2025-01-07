@@ -13,9 +13,13 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    image: {
+    phonenumber: {
         type: String,
         required: true,
+    },
+    image: {
+        type: String,
+        default: "https://via.placeholder.com/150"
     }
 });
 export default mongoose.model("User", userSchema);

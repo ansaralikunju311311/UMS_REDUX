@@ -53,33 +53,25 @@ const SignUp = () => {
       }
 
       dispatch(setLoading(true));
+      setError('');
       
-      // Transform the data to match backend expectations
-      const userData = {
-        username: data.name, // Changed from name to username
+      const response = await axios.post('http://localhost:3000/api/user/register', {
+        username: data.username,
         email: data.email,
         password: data.password,
+        phonenumber: data.phonenumber,
         image: imageUrl
-      };
+      });
 
-      const response = await axios.post('http://localhost:3000/api/user/register', userData);
+      console.log('Registration response:', response);
 
-      if (response.data.success) {
-        dispatch(registerSuccess({
-          user: response.data.user,
-          token: response.data.token
-        }));
-        reset();
+      if (response.status === 201) {
+        dispatch(setLoading(false));
         navigate('/user/login', { state: { fromSignup: true } });
       }
     } catch (error) {
-      console.error('Registration Error:', error);
-      if (error.response && error.response.data) {
-        dispatch(setError(error.response.data.message));
-      } else {
-        dispatch(setError('Registration failed. Please try again.'));
-      }
-    } finally {
+      console.error('Registration error:', error);
+      dispatch(setError(error.response?.data?.message || 'Registration failed. Please try again.'));
       dispatch(setLoading(false));
     }
   };
@@ -95,17 +87,17 @@ const SignUp = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {/* Username Field */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
               Username
             </label>
             <input
-              id="name"
+              id="username"
               type="text"
-              {...register('name', { required: 'Username is required' })}
+              {...register('username', { required: 'Username is required' })}
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
-            {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+            {errors.username && (
+              <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
             )}
           </div>
 
@@ -129,6 +121,12 @@ const SignUp = () => {
             {errors.email && (
               <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
             )}
+          </div>
+
+          <div>
+            <label htmlFor="phonenumber" className="block text-sm font-medium text-gray-700">Phone Number</label>
+            <input type="text" {...register('phonenumber', { required: 'Phone Number is required', pattern: /^\d{10}$/})} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"/>
+            {errors.phonenumber && <p className="text-red-500 text-sm mt-1">{errors.phonenumber.message}</p>}
           </div>
 
           {/* Password Field */}

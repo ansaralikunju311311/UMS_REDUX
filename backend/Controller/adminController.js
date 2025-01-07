@@ -48,21 +48,21 @@ export const displayUsers = async (req, res) => {
 
 export const updateUser = async (req, res) => {
     try {
-        const { userId } = req.params;
-        const { username, email, phonenumber } = req.body;
+        const { username, email, phonenumber, image } = req.body;
+        const userId = req.params.userId;
 
-        const user = await userModel.findById(userId);
-        if (!user) {
+        // Find user and update
+        const updatedUser = await userModel.findByIdAndUpdate(
+            userId,
+            { username, email, phonenumber, image },
+            { new: true, select: '-password' } // Return updated user without password
+        );
+
+        if (!updatedUser) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Update user fields
-        user.username = username || user.username;
-        user.email = email || user.email;
-        user.phonenumber = phonenumber || user.phonenumber;
-
-        await user.save();
-        res.json({ message: "User updated successfully", user });
+        res.json({ message: "User updated successfully", user: updatedUser });
     } catch (error) {
         console.error('Error updating user:', error);
         res.status(500).json({ message: "Internal Server Error" });

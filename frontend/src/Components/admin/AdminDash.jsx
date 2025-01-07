@@ -25,8 +25,11 @@ const AdminDash = () => {
     const [editFormData, setEditFormData] = useState({
         username: '',
         email: '',
-        phonenumber: ''
+        phonenumber: '',
+        image: ''
     });
+    const [editImageUrl, setEditImageUrl] = useState('');
+    const [editImageUploading, setEditImageUploading] = useState(false);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -64,6 +67,7 @@ const AdminDash = () => {
             email: user.email,
             phonenumber: user.phonenumber
         });
+        setEditImageUrl(user.image);
     };
 
     const handleEditFormChange = (e) => {
@@ -80,30 +84,40 @@ const AdminDash = () => {
             email: '',
             phonenumber: ''
         });
+        setEditImageUrl('');
     };
 
-    const handleSaveEdit = async (userId) => {
+    const handleSaveEdit = async () => {
+        if (!editImageUrl) {
+            alert('Please upload an image');
+            return;
+        }
+
         try {
             const token = localStorage.getItem('adminToken');
-            const response = await axios.put(`http://localhost:3000/api/admin/users/${userId}`, editFormData, {
-                headers: {
-                    Authorization: `Bearer ${token}`
+            const response = await axios.put(
+                `http://localhost:3000/api/admin/users/${editingUser._id}`,
+                { ...editFormData, image: editImageUrl },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
                 }
-            });
-            
+            );
+
             setUsers(users.map(user => 
-                user._id === userId ? response.data.user : user
+                user._id === editingUser._id ? response.data.user : user
             ));
-            
             setEditingUser(null);
             setEditFormData({
                 username: '',
                 email: '',
                 phonenumber: ''
             });
+            setEditImageUrl('');
         } catch (error) {
             console.error('Error updating user:', error);
-            alert('Failed to update user');
+            alert(error.response?.data?.message || 'Failed to update user');
         }
     };
 
@@ -144,6 +158,28 @@ const AdminDash = () => {
             alert('Failed to upload image');
         } finally {
             setImageUploading(false);
+        }
+    };
+
+    const handleEditImageUpload = async (file) => {
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'testing');
+
+        setEditImageUploading(true);
+        try {
+            const response = await axios.post(
+                'https://api.cloudinary.com/v1_1/dliraelbo/image/upload',
+                formData
+            );
+            setEditImageUrl(response.data.url);
+        } catch (error) {
+            console.error('Image upload Error:', error);
+            alert('Failed to upload image');
+        } finally {
+            setEditImageUploading(false);
         }
     };
 
@@ -345,7 +381,7 @@ const AdminDash = () => {
                                                 {editingUser?._id === user._id ? (
                                                     <div className="flex space-x-2">
                                                         <button
-                                                            onClick={() => handleSaveEdit(user._id)}
+                                                            onClick={handleSaveEdit}
                                                             className="text-green-600 hover:text-green-900"
                                                         >
                                                             Save
@@ -509,6 +545,109 @@ const AdminDash = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit User Modal */}
+            {editingUser && (
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
+                    <div className="bg-white p-8 rounded-lg shadow-xl w-96">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-medium">Edit User</h3>
+                            <button
+                                onClick={() => {
+                                    setEditingUser(null);
+                                    setEditFormData({
+                                        username: '',
+                                        email: '',
+                                        phonenumber: ''
+                                    });
+                                    setEditImageUrl('');
+                                }}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="space-y-4">
+                            {/* Image Upload */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Profile Image
+                                </label>
+                                <div className="mt-2 flex flex-col items-center">
+                                    {editImageUrl && (
+                                        <img 
+                                            src={editImageUrl} 
+                                            alt="Profile preview" 
+                                            className="h-32 w-32 object-cover rounded-full mb-4"
+                                        />
+                                    )}
+                                    <label className={`cursor-pointer ${editImageUploading ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'} text-white px-4 py-2 rounded-md text-sm font-medium`}>
+                                        {editImageUploading ? 'Uploading...' : 'Choose New Image'}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => handleEditImageUpload(e.target.files[0])}
+                                            disabled={editImageUploading}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Username</label>
+                                <input
+                                    type="text"
+                                    value={editFormData.username}
+                                    onChange={(e) => setEditFormData({ ...editFormData, username: e.target.value })}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Email</label>
+                                <input
+                                    type="email"
+                                    value={editFormData.email}
+                                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                                <input
+                                    type="text"
+                                    value={editFormData.phonenumber}
+                                    onChange={(e) => setEditFormData({ ...editFormData, phonenumber: e.target.value })}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                            </div>
+                        </div>
+                        <div className="mt-6 flex justify-end space-x-3">
+                            <button
+                                onClick={() => {
+                                    setEditingUser(null);
+                                    setEditFormData({
+                                        username: '',
+                                        email: '',
+                                        phonenumber: ''
+                                    });
+                                    setEditImageUrl('');
+                                }}
+                                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveEdit}
+                                className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-600"
+                            >
+                                Save Changes
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

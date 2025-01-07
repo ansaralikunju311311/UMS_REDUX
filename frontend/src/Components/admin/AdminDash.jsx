@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
-// import User from '../../../backend/Model/userModel';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../redux/features/adminSlice';
 import axios from 'axios';
 
 const AdminDash = () => {
-    const dispatch = useDispatch();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const { admin } = useSelector((state) => state.admin);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -42,22 +42,31 @@ const AdminDash = () => {
         navigate('/admin/login');
     };
 
+    const filteredUsers = users.filter(user => {
+        const searchTermLower = searchTerm.toLowerCase();
+        return (
+            user.username?.toLowerCase().includes(searchTermLower) ||
+            user.email?.toLowerCase().includes(searchTermLower) ||
+            user.phonenumber?.toLowerCase().includes(searchTermLower)
+        );
+    });
+
     if (!admin) {
         return <div>Loading...</div>;
     }
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="text-xl font-semibold">Loading users...</div>
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="text-xl text-red-600">{error}</div>
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-red-500">{error}</div>
             </div>
         );
     }
@@ -90,6 +99,22 @@ const AdminDash = () => {
                             <h2 className="text-lg font-medium text-gray-900">Registered Users</h2>
                         </div>
                         <div className="overflow-x-auto">
+                            <div className="mb-6">
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Search by name, email, or phone..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
@@ -108,7 +133,7 @@ const AdminDash = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {users.map((user) => (
+                                    {filteredUsers.map((user) => (
                                         <tr key={user._id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
@@ -144,6 +169,11 @@ const AdminDash = () => {
                                     ))}
                                 </tbody>
                             </table>
+                            {filteredUsers.length === 0 && (
+                                <div className="text-center py-4 text-gray-500">
+                                    No users found matching your search.
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

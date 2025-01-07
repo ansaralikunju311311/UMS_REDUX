@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import userRouter from './Routes/userRoutes.js';
+import adminRouter from './Routes/adminRoutes.js';
 dotenv.config();
 import cors from 'cors';
 const app = express();
@@ -24,6 +25,7 @@ const ConnectDB = async () => {
 };
 ConnectDB();
 app.use('/api/user', userRouter);
+app.use('/api/admin', adminRouter);
 app.listen(3000, () => {
     console.log(`The port is running correctly ${process.env.PORT}`);
 });

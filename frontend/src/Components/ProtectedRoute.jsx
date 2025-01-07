@@ -3,67 +3,66 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
 import { loginSuccess, setError, setLoading } from '../redux/features/userSlice';
+
 const ProtectedRoute = ({ children }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { token, isAuthenticated, loading } = useSelector((state) => state.user);
-  console.log('log 0')
-    useEffect(() => {
-          console.log('sublog')
-        const verifyToken = async () => {
+    const { isAuthenticated, loading } = useSelector((state) => state.user);
+    const { isAuthenticated: isAdminAuthenticated } = useSelector((state) => state.admin);
 
-           
+    useEffect(() => {
+        const verifyToken = async () => {
             const storedToken = localStorage.getItem('token');
-            console.log("Log 1")
-            
-            if (!storedToken) {
-                localStorage.removeItem('token'); // Clear any invalid token
-                navigate('/user/login');
+            const adminToken = localStorage.getItem('adminToken');
+
+            // Handle admin authentication first
+            if (adminToken && isAdminAuthenticated) {
+                navigate('/admin/dashboard');
                 return;
             }
-            console.log('fkkkffkfkgkfmgkfgmfkgg')
-            try {
-                console.log("Log 2")
-                dispatch(setLoading(true));
-                const response = await axios.get('http://localhost:3000/api/user/verify', {
-                    headers: {
-                        Authorization: `Bearer ${storedToken}`
-                    }
-                });
-                console.log("Log 3")
 
-                if (response.data.user) {
-                    console.log(response.data.user,"=======response");
-                    dispatch(loginSuccess({
-                        user: response.data.user,
-                        token: storedToken
-                    }));
+            // For user token verification
+            if (storedToken) {
+                try {
+                    dispatch(setLoading(true));
+                    const response = await axios.get('http://localhost:3000/api/user/verify', {
+                        headers: {
+                            Authorization: `Bearer ${storedToken}`
+                        }
+                    });
+
+                    if (response.data.user) {
+                        dispatch(loginSuccess({
+                            user: response.data.user,
+                            token: storedToken
+                        }));
+                        // If not already on profile page, redirect there
+                        if (window.location.pathname !== '/user/profile') {
+                            navigate('/user/profile');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Token verification failed:', error);
+                    localStorage.removeItem('token');
+                    dispatch(setError('Session expired. Please login again.'));
+                    navigate('/user/login');
+                } finally {
+                    dispatch(setLoading(false));
                 }
-                console.log("Log 4")
-            } catch (error) {
-                console.error('Token verification failed:', error);
-                localStorage.removeItem('token'); // Clear invalid token
-                dispatch(setError('Session expired. Please login again.'));
+            } else {
                 navigate('/user/login');
-            } finally {
-                dispatch(setLoading(false));
             }
         };
 
-        if (!isAuthenticated) {
-            verifyToken();
-        }
-    }, [dispatch, navigate, isAuthenticated]);
+        verifyToken();
+    }, [dispatch, navigate, isAdminAuthenticated]);
 
     if (loading) {
         return <div>Loading...</div>;
     }
 
-    if (!isAuthenticated) {
-        return null;
-    }
-     console.log('last one')
-    return children;
+    // Only render children if user is authenticated
+    return isAuthenticated ? children : null;
 };
 
 export default ProtectedRoute;

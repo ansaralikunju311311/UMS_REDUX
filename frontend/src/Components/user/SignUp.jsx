@@ -64,19 +64,21 @@ const SignUp = () => {
 
       const response = await axios.post('http://localhost:3000/api/user/register', userData);
 
-      if (response.data) {
+      if (response.data.success) {
         dispatch(registerSuccess({
           user: response.data.user,
           token: response.data.token
         }));
-        localStorage.setItem('token', response.data.token);
         reset();
-        navigate('/user/profile');
+        navigate('/user/login', { state: { fromSignup: true } });
       }
     } catch (error) {
       console.error('Registration Error:', error);
-      const errorMessage = error.response?.data?.message || 'Registration failed';
-      dispatch(setError(errorMessage));
+      if (error.response && error.response.data) {
+        dispatch(setError(error.response.data.message));
+      } else {
+        dispatch(setError('Registration failed. Please try again.'));
+      }
     } finally {
       dispatch(setLoading(false));
     }

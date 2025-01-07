@@ -2,7 +2,7 @@ import adminModel from "../Model/adminModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import createToken from "../utils/createToken.js";
-
+import userModel from "../Model/userModel.js";
 export const adminLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -30,6 +30,15 @@ export const verifyToken = async (req, res) => {
         res.json({ admin });
     } catch (error) {
         console.error('Token verification error:', error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+export const displayUsers = async (req, res) => {
+    try {
+        const users = await userModel.find();
+        res.json({ users });
+    } catch (error) {
+        console.error('Error fetching users:', error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };

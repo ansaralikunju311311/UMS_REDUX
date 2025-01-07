@@ -5,13 +5,26 @@ import createToken from "../utils/createToken.js";
 
 export const registerUser = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, image } = req.body;
+        
+        // Validate required fields
+        if (!username || !email || !password || !image) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "User already exists" });
         }
+
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User({ username, email, password: hashedPassword });
+        const user = new User({ 
+            username, 
+            email, 
+            password: hashedPassword,
+            image 
+        });
+        
         await user.save();
         const token = createToken({ userid: user._id });
         
@@ -19,11 +32,17 @@ export const registerUser = async (req, res) => {
         const userData = {
             _id: user._id,
             username: user.username,
-            email: user.email
+            email: user.email,
+            image: user.image
         };
-        res.status(201).json({ message: "User registered successfully", user: userData, token });
+
+        res.status(201).json({ 
+            message: "User registered successfully", 
+            user: userData, 
+            token 
+        });
     } catch (error) {
-        console.error(error);
+        console.error('Registration error:', error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -45,11 +64,12 @@ export const loginUser = async (req, res) => {
         const userData = {
             _id: user._id,
             username: user.username,
-            email: user.email
+            email: user.email,
+            image: user.image
         };
         res.status(200).json({ user: userData, token });
     } catch (error) {
-        console.error(error);
+        console.error('Login error:', error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -62,7 +82,7 @@ export const verifyToken = async (req, res) => {
         }
         res.json({ user });
     } catch (error) {
-        console.error(error);
+        console.error('Token verification error:', error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -70,10 +90,9 @@ export const verifyToken = async (req, res) => {
 export const logoutUser = async (req, res) => {
     try {
         // You can add any server-side cleanup here if needed
-        // For example, if you're using refresh tokens or want to invalidate the token
         res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
-        console.error(error);
+        console.error('Logout error:', error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };

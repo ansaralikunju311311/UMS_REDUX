@@ -3,10 +3,14 @@ import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import {useNavigate} from 'react-router-dom';
 import {useDispatch} from 'react-redux';
-import { setLoading, setError,  registerSuccess } from '../../redux/features/userSlice';
+import { useState } from 'react';
+import { setLoading, setError, registerSuccess } from '../../redux/features/userSlice';
+
 const SignUp = () => {
+  const [imageUrl, setImageUrl] = useState('');
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  
   const {
     register,
     handleSubmit,
@@ -14,112 +18,133 @@ const SignUp = () => {
     formState: { errors },
     reset
   } = useForm();
-  const password = watch('password')
+  
+  const password = watch('password');
+
+  const handleImageUpload = async (file) => {
+    if (!file) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'testing');
+
+    try {
+      dispatch(setLoading(true));
+      const response = await axios.post(
+        'https://api.cloudinary.com/v1_1/dliraelbo/image/upload',
+        formData
+      );
+      setImageUrl(response.data.url);
+      dispatch(setLoading(false));
+    } catch (error) {
+      console.error('Image upload Error:', error);
+      dispatch(setError('Image upload failed'));
+      dispatch(setLoading(false));
+    }
+  };
 
   const onSubmit = async (data) => {
     try {
-    dispatch(setLoading(true));
-    const response = await axios.post('http://localhost:3000/api/user/register', data);
-    dispatch(registerSuccess({
-      user: response.data.user,
-      token: response.data.token,
-    }));
-    console.log(response);
-    navigate('/user/login');
-    console.log('Form Data:', data);
-    alert('Form submitted successfully!');
-    reset();
-  } catch (error) {
-    dispatch(setError(error));
-    console.error('Registration Error:', error);
-    alert('Registration failed. Please check your input.');
-  }
+      if (!imageUrl) {
+        dispatch(setError('Please upload an image first'));
+        return;
+      }
+
+      dispatch(setLoading(true));
+      
+      // Transform the data to match backend expectations
+      const userData = {
+        username: data.name, // Changed from name to username
+        email: data.email,
+        password: data.password,
+        image: imageUrl
+      };
+
+      const response = await axios.post('http://localhost:3000/api/user/register', userData);
+
+      if (response.data) {
+        dispatch(registerSuccess({
+          user: response.data.user,
+          token: response.data.token
+        }));
+        localStorage.setItem('token', response.data.token);
+        reset();
+        navigate('/user/profile');
+      }
+    } catch (error) {
+      console.error('Registration Error:', error);
+      const errorMessage = error.response?.data?.message || 'Registration failed';
+      dispatch(setError(errorMessage));
+    } finally {
+      dispatch(setLoading(false));
+    }
   };
-  
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Sign Up</h2>
-        <form onSubmit={handleSubmit(onSubmit)}>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Create your account
+          </h2>
+        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {/* Username Field */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2" htmlFor="username">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
               Username
             </label>
             <input
+              id="name"
               type="text"
-              id="username"
-              placeholder="Enter your username"
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                errors.username ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
-              }`}
-              {...register('username', { required: 'Username is required' })}
+              {...register('name', { required: 'Username is required' })}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
-            {errors.username && (
-              <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
             )}
           </div>
 
           {/* Email Field */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2" htmlFor="email">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
             </label>
             <input
-              type="email"
               id="email"
-              placeholder="Enter your email"
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                errors.email ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
-              }`}
+              type="email"
               {...register('email', {
                 required: 'Email is required',
                 pattern: {
-                  value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
-                  message: 'Enter a valid email address',
-                },
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'Invalid email address'
+                }
               })}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
-          </div>
-
-          {/* Phone Number Field */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2" htmlFor="phone">
-              Phone Number
-            </label>
-            <input
-              type="number"
-              id="phone"
-              placeholder="Enter your phone number"
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                errors.phone ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
-              }`}
-              {...register('phone', {
-                required: 'Phone number is required',
-                minLength: { value: 10, message: 'Phone number must be 10 digits' },
-              })}
-            />
-            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+            )}
           </div>
 
           {/* Password Field */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2" htmlFor="password">
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
             </label>
             <input
-              type="password"
               id="password"
-              placeholder="Enter your password"
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                errors.password ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
-              }`}
+              type="password"
               {...register('password', {
                 required: 'Password is required',
-                minLength: { value: 6, message: 'Password must be at least 6 characters' },
+                minLength: {
+                  value: 6,
+                  message: 'Password must be at least 6 characters'
+                }
               })}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
@@ -127,34 +152,52 @@ const SignUp = () => {
           </div>
 
           {/* Confirm Password Field */}
-          <div className="mb-6">
-            <label className="block text-gray-700 font-medium mb-2" htmlFor="confirm-password">
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
               Confirm Password
             </label>
             <input
+              id="confirmPassword"
               type="password"
-              id="confirm-password"
-              placeholder="Confirm your password"
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
-              }`}
               {...register('confirmPassword', {
                 required: 'Please confirm your password',
-                validate: (value) =>
-                  value === watch('password') || 'Passwords do not match',
+                validate: value =>
+                  value === password || 'The passwords do not match'
               })}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
             {errors.confirmPassword && (
               <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>
             )}
           </div>
-          {/* <input type="file"/> */}
+
+          {/* Image Upload */}
+          <div>
+            <label htmlFor="image" className="block text-sm font-medium text-gray-700">
+              Profile Image
+            </label>
+            <input
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleImageUpload(e.target.files[0])}
+              className="mt-1 block w-full py-2 px-3"
+            />
+            {imageUrl && (
+              <img 
+                src={imageUrl} 
+                alt="Profile preview" 
+                className="mt-2 h-20 w-20 object-cover rounded-full"
+              />
+            )}
+          </div>
+
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            Submit
+            Sign Up
           </button>
         </form>
       </div>

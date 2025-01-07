@@ -5,6 +5,8 @@ import {useNavigate} from 'react-router-dom';
 import {useDispatch} from 'react-redux';
 import { useState } from 'react';
 import { setLoading, setError, registerSuccess } from '../../redux/features/userSlice';
+import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const SignUp = () => {
   const [imageUrl, setImageUrl] = useState('');
@@ -23,6 +25,7 @@ const SignUp = () => {
 
   const handleImageUpload = async (file) => {
     if (!file) {
+      toast.error('Please select an image file');
       return;
     }
 
@@ -37,10 +40,12 @@ const SignUp = () => {
         formData
       );
       setImageUrl(response.data.url);
+      toast.success('Image uploaded successfully!');
       dispatch(setLoading(false));
     } catch (error) {
       console.error('Image upload Error:', error);
       dispatch(setError('Image upload failed'));
+      toast.error('Image upload failed. Please try again.');
       dispatch(setLoading(false));
     }
   };
@@ -49,6 +54,7 @@ const SignUp = () => {
     try {
       if (!imageUrl) {
         dispatch(setError('Please upload an image first'));
+        toast.error('Please upload an image first');
         return;
       }
 
@@ -66,12 +72,14 @@ const SignUp = () => {
       console.log('Registration response:', response);
 
       if (response.status === 201) {
+        toast.success('Registration successful! Please login.');
         dispatch(setLoading(false));
         navigate('/user/login', { state: { fromSignup: true } });
       }
     } catch (error) {
       console.error('Registration error:', error);
       dispatch(setError(error.response?.data?.message || 'Registration failed. Please try again.'));
+      toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
       dispatch(setLoading(false));
     }
   };
@@ -200,6 +208,12 @@ const SignUp = () => {
             Sign Up
           </button>
         </form>
+        <p className="mt-2 text-center text-sm font-medium text-gray-600">
+          Already have an account?{' '}
+          <Link to="/user/login" className="text-indigo-600 hover:text-indigo-700 transition duration-150 ease-in-out">
+            Login
+          </Link>
+        </p>
       </div>
     </div>
   );

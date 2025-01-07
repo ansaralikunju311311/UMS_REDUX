@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setLoading, loginSuccess, setError } from '../../redux/features/userSlice.js';
+import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -31,14 +33,15 @@ const Login = () => {
         }));
         
         navigate('/user/profile');
-        alert('Login successful!');
+        toast.success('Login successful!');
       } else {
         dispatch(setError('Invalid response from server'));
+        toast.error('Invalid response from server');
       }
     } catch (error) {
       dispatch(setError(error.response?.data?.message || 'Login failed'));
       console.error('Login Error:', error);
-      alert('Login failed. Please check your credentials.');
+      toast.error(error.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
       dispatch(setLoading(false));
     }
@@ -102,6 +105,12 @@ const Login = () => {
             Submit
           </button>
         </form>
+        <p className="mt-6 text-center text-sm">
+          Don't have an account?{' '}
+          <Link to="/user/signup" className="text-blue-500 hover:underline">
+            Sign Up
+          </Link>
+        </p>
       </div>
     </div>
   );

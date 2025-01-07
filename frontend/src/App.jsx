@@ -1,20 +1,26 @@
 import React from 'react'
+import { Route, Routes, Navigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+
+// User Components
 import SignUp from './Components/user/SignUp'
 import Login from './Components/user/Login'
 import Profile from './Components/user/Profile'
-import ProtectedRoute from './Components/ProtectedRoute'
-import { Route, Routes, Navigate } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import AuthProtectedRoute from './Components/AuthProtectedRoute'
-import AuthProtectedRouteSign from './Components/AuthProctedRouteSign'
+
+// Admin Components
 import AdminLogin from './Components/admin/AdminLogin'
 import AdminDash from './Components/admin/AdminDash'
+
+// Route Protection Components
+import ProtectedRoute from './Components/ProtectedRoute'
 import ProtectedDash from './Components/ProtectedDash'
+import AuthProtectedRoute from './Components/AuthProtectedRoute'
+import AuthProtectedRouteSign from './Components/AuthProctedRouteSign'
 import AuthProtectedDash from './Components/AuthProtectedDash'
 
 const App = () => {
-  const { isAuthenticated } = useSelector(state => state.user);
-  const { isAuthenticated: isAdminAuthenticated } = useSelector(state => state.admin);
+  const { isAuthenticated } = useSelector(state => state.user)
+  const { isAuthenticated: isAdminAuthenticated } = useSelector(state => state.admin)
 
   return (
     <div>
@@ -82,13 +88,11 @@ const App = () => {
         {/* Catch all unknown routes */}
         <Route
           path='*'
-          element={
-            <Navigate to="/" />
-          }
+          element={<Navigate to="/" />}
         />
       </Routes>
     </div>
   )
 }
 
-export default App;
+export default App
